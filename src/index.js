@@ -4,8 +4,7 @@ const halite = require('halite')
 
 module.exports = (log, cb) => {
 
-  // TODO
-  // we should unserialize everything on read
+  // TODO we could unserialize everything on read
   log.createReadStream({live:true}).on('data',cb)
 
   return {
@@ -21,10 +20,14 @@ module.exports = (log, cb) => {
       var en = utils.encrypted(obj, my_keypair, to_pubkey)
       log.add(links, en, cb)
     },
- 
+
     decrypt: (node, my_keypair) => {
-      node.value = utils.decrypt(node.value, my_keypair)
-      return node
+      try {
+        node.value = utils.decrypt(node.value, my_keypair)
+        return node
+      } catch (e) {
+        return null
+      }
     }
 
   }

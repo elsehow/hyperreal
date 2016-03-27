@@ -2,7 +2,67 @@
 
 encrypted, verified, pseudonymous communication over a shared hyperlog
 
-this is a low-level library, designed to build domin logic ontop of
+this is a low-level library, on top of which you can build your application/domain logic
+
+## background
+
+there are some great solutions for [distributed architectures with persistent identities](http://ssbc.github.io/)
+
+but, for some applications, we do not want persistent identities. compare ebay and craigslist. on ebay, we want identities to which we can ascribe reputation, etc.
+
+on craigslist, we want pseudonymity - people are not identified (except, in this case, by their public keys) - but, we can still send them private (encrypted) messages.
+
+check back for more application examples
+
+## usage
+
+```javascript
+const hyperreal = require('hyperreal')
+const hyperlog = require('hyperlog')
+const halite = require('halite')
+const memdb = require('memdb')
+
+// let's send an encrypted message to each other
+const mykeypair = halite.keypair()
+// our psuedonyms are our public keys
+const yourkeypair = halite.keypair()
+// over a shared hyperlog
+let log = hyperlog(memdb(), {
+  valueEncoding: 'json',
+})
+
+// i'll make a hyperreal instance
+let real = hyperreal(log, item => {
+  // if i see an unencrypted post,
+  if (!item.value.ciphertext) {
+    // i'll get your pubkey (pseudonym)
+    let pk = real.utils.unserialize(
+      item.value.from_pubkey
+    )
+    // and encrypt a reply to you
+    real.encrypted([item.key], {
+      message: 'muy buena onda'
+    }, mykeypair, pk)
+  }
+})
+
+// now you make a hyperreal instance
+let real2 = hyperreal(log, item => {
+  // when you see something with a ciphertext,
+  if (item.value.ciphertext) {
+    // see if you can decrypt it with your keypair
+    var dec = real.decrypt(item, yourkeypair)
+    console.log(`you said "${dec.value.body.message}"`)
+  }
+})
+
+// now, send me a plaintext message to get the party started
+real2.unencrypted([], {
+  message: 'y como te parece'
+}, yourkeypair)
+
+// > you said "muy buena onda"
+```
 
 ## api
 
