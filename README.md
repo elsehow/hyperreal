@@ -36,9 +36,7 @@ let real = hyperreal(log, item => {
   // if i see an unencrypted post,
   if (!item.value.ciphertext) {
     // i'll get your pubkey (pseudonym)
-    let pk = real.utils.unserialize(
-      item.value.from_pubkey
-    )
+    let pk = item.value.from_pubkey
     // and encrypt a reply to you
     real.encrypted([item.key], {
       message: 'muy buena onda'

@@ -11,9 +11,6 @@ const mykeypair = halite.keypair()
 const yourkeypair = halite.keypair()
 const eveskeypair = halite.keypair()
 
-// test utils -------------------------------
-require('./utils.js')()
-
 // test core api ----------------------------
 
 test('we can share a hyperlog, i can see your posts', t => {
@@ -30,9 +27,7 @@ test('we can share a hyperlog, i can see your posts', t => {
       // we got the post
       t.ok(item, 'i see your post')
       // get your pubkey from the message
-      let pk = real.utils.unserialize(
-        item.value.from_pubkey
-      )
+      let pk = item.value.from_pubkey
       // i'll encrypt a reply to you
       real.encrypted([item.key], {
         message: 'muy buena onda'
