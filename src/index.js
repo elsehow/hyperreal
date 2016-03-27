@@ -12,18 +12,19 @@ module.exports = (log, cb) => {
 
     utils: utils,
 
-    unencrypted:  (links, m, my_keypair, cb) => {
-      var un = utils.unencrypted(m, halite.pk(my_keypair))
+    unencrypted:  (links, obj, my_keypair, cb) => {
+      var un = utils.unencrypted(obj, halite.pk(my_keypair))
       log.add(links, un, cb)
     },
 
-    encrypted: (links, m, my_keypair, to_pubkey, cb) => {
-      var en = utils.encrypted(m, my_keypair, to_pubkey)
+    encrypted: (links, obj, my_keypair, to_pubkey, cb) => {
+      var en = utils.encrypted(obj, my_keypair, to_pubkey)
       log.add(links, en, cb)
     },
-
+ 
     decrypt: (node, my_keypair) => {
-      return utils.decrypt(node.value, my_keypair)
+      node.value = utils.decrypt(node.value, my_keypair)
+      return node
     }
 
   }

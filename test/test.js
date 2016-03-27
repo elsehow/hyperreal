@@ -45,7 +45,7 @@ test('we can share a hyperlog, i can see your posts', t => {
     if (item.value.ciphertext) {
       // see if you can decrypt it with your keypair
       var dec = real.decrypt(item, yourkeypair)
-      t.deepEqual(dec.body.message,
+      t.deepEqual(dec.value.body.message,
                   'muy buena onda',
                   'you can decrypt a message i sent you')
     }
