@@ -54,12 +54,11 @@ module.exports = {
     let cleartext = JSON.stringify(obj)
     let nonce = halite.makenonce()
     let from_sk = halite.sk(from_keypair)
+    let from_pk = halite.pk(from_keypair)
     let ciphertext = halite.encrypt(cleartext,
                                     nonce,
                                     to_pubkey,
                                     from_sk)
-    let from_pk = halite.pk(from_keypair)
-
     return {
       ciphertext: serialize(ciphertext),
       nonce: serialize(nonce),
@@ -68,19 +67,20 @@ module.exports = {
     }
   },
 
-  // TODO destructuring
   // => { body, from_pubkey, to_pubkey }
-  decrypt: (encrypted, to_keypair) => {
+  decrypt: (encrypted, keypair) => {
     let to = unserialize(encrypted.to_pubkey)
-    let body = halite.decrypt(
-      unserialize(encrypted.ciphertext),
-      unserialize(encrypted.nonce),
-      to,
-      halite.sk(to_keypair))
-
+    let from = unserialize(encrypted.from_pubkey)
+    let nonce = unserialize(encrypted.nonce)
+    let ctxt = unserialize(encrypted.ciphertext)
+    let my_sk = halite.sk(keypair)
+    let body = halite.decrypt(ctxt,
+                              nonce,
+                              from,
+                              my_sk)
     return {
       body: JSON.parse(body),
-      from_pubkey: unserialize(encrypted.from_pubkey),
+      from_pubkey: from,
       to_pubkey: to
     }
   },

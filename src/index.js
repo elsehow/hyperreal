@@ -1,35 +1,29 @@
 const utils = require('./utils')
+const halite = require('halite')
+
 
 module.exports = (log, cb) => {
 
-  log
-    .createReadStream({live: true})
-    .on('data', cb)
+  // TODO
+  // we should unserialize everything on read
+  log.createReadStream({live:true}).on('data',cb)
 
   return {
 
-    // append to log a plaintext post m
-    // identified by your pk
-    post:  (m, pk, cb) => {
-      pk = Array.apply(null, new Uint8Array(pk))
-      log.append(
-        utils.post(m, pk),
-        cb)
+    utils: utils,
+
+    unencrypted:  (links, m, my_keypair, cb) => {
+      var un = utils.unencrypted(m, halite.pk(my_keypair))
+      log.add(links, un, cb)
     },
 
-    // reply to post `p` with message `m`
-    // it will be encrypted to the sender of `p`
-    // and signed with your keypair `kp`
-    // TODO destructuring
-    reply: (p, kp, m, cb) => {
-      var pk = new Uint8Array(p.value.pubkey)
-      var r = utils.reply(p.key, pk, kp, m)
-      log.add(p.key, r, cb)
+    encrypted: (links, m, my_keypair, to_pubkey, cb) => {
+      var en = utils.encrypted(m, my_keypair, to_pubkey)
+      log.add(links, en, cb)
     },
 
-    // decrypt reply `r`
-    // with keypair `kp`
-    decrypt: (r, kp) => {
+    decrypt: (node, my_keypair) => {
+      return utils.decrypt(node.value, my_keypair)
     }
 
   }

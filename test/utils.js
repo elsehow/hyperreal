@@ -57,7 +57,7 @@ module.exports = () => {
     var serialized = JSON.stringify(encrypted)
     var unserialized = JSON.parse(serialized)
     /// decrypt it
-    var decrypted = utils.decrypt(unserialized, my_kp)
+    var decrypted = utils.decrypt(unserialized, your_kp)
 
     // everything should be as expected
     t.ok(decrypted.body, 'has body field')
