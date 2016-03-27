@@ -1,8 +1,8 @@
 {
-  "name": "nickslist",
-  "version": "1.0.0",
+  "name": "hyperreal",
+  "version": "1.0.1",
   "description": "",
-  "main": "index.js",
+  "main": "src/index.js",
   "scripts": {
     "test": "tape test/test.js | tap-spec",
     "watch": "npm-watch"
