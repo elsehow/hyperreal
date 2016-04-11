@@ -1,8 +1,8 @@
 'use strict';
 
 const test = require('tape')
-const hyperreal = require('../src/')
-const keys = require('../src/keys')
+const hyperreal = require('..')
+const keys = require('../keys')
 const hyperlog = require('hyperlog')
 const memdb = require('memdb')
 

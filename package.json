@@ -1,8 +1,8 @@
 {
   "name": "hyperreal",
-  "version": "2.0.1",
+  "version": "2.0.4",
   "description": "verified & encrypted 1:1 communication over a hyperlog",
-  "main": "src/index.js",
+  "main": "./index.js",
   "scripts": {
     "test": "tape test/test.js | tap-spec",
     "watch": "npm-watch"
