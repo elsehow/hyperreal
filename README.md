@@ -93,11 +93,11 @@ generate a new encryption keypair
 
 `log` is a hyperlog
 
-`signKeypair` is a keypair generated from =talk.signKeypair()=
+`signKeypair` is a keypair generated from `talk.signKeypair()`
 
 `encryptKeypair` is a keypair generated from `talk.encryptKeypair()`
 
-`onSignedMessage(message, encryptPublicKey, node)` is called when a message encrypted to your =encryptKeypair.publicKey= comes in over the hyperlog. **use to learn about new encryption keys from others.**
+`onSignedMessage(message, encryptPublicKey, node)` is called when a message encrypted to your `encryptKeypair.publicKey` comes in over the hyperlog. **use to learn about new encryption keys from others.**
 
 - `message` is the (verified) message (an object)
 
@@ -111,19 +111,19 @@ generate a new encryption keypair
 
 - `encryptPublicKey` is the `encryptKeypair.publicKey` of the party that *sent* the message
 
-- =node= is the original hyperlog node that came over the wire. use this to find =node.key=.
+- `node` is the original hyperlog node that came over the wire. use this to find `node.key`.
 
 ### real.signedMessage (links, obj, cb)
     
-sign object =obj= and =encryptPubkey= with your =signKeypair=
+sign object `obj` and `encryptPubkey` with your `signKeypair`
 
 `cb` wraps hyperlog's `log.add` callback
 
-**use this to introduce your =encryptKeypair.publicKey=, so people can send you encrypted messages.**
+**use this to introduce your `encryptKeypair.publicKey`, so people can send you encrypted messages.**
 
 ### real.encryptedMessage (links, obj, toPubkey, cb)
 
-encrypt object =obj= to =toPubkey= with our =encryptKeypair=
+encrypt object `obj` to `toPubkey` with our `encryptKeypair`
 
 `cb` wraps hyperlog's `log.add` callback
 
