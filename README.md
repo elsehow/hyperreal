@@ -1,11 +1,77 @@
 # hyperreal
+verified & encrypted 1:1 communication over a hyperlog
+## install
+```
+    npm install hyperreal
+```
+## use
 
-encrypted, verified, pseudonymous communication over a shared hyperlog
+```javascript
+'use strict';
 
-this is a low-level library, on top of which you can build your application/domain logic
+const hyperreal = require('hyperreal')
+const keys = require('hyperreal/keys')
+const hyperlog = require('hyperlog')
+const memdb = require('memdb')
+
+// let's send an encrypted message from me
+const myEncKeypair    = keys.encryptKeypair()
+const mySignKeypair   = keys.signKeypair()
+// to you
+const yourEncKeypair  = keys.encryptKeypair()
+const yourSignKeypair = keys.signKeypair()
+// over a shared hyperlog
+let log = hyperlog(memdb(), {
+  valueEncoding: 'json',
+})
+
+// here's what you'll ask me
+// (unencrypted, but signed)
+const call = {como: 'te parece'}
+// and here's what i'll reply
+// (encrypted, just to you)
+const response = {buena: 'onda'}
+
+// i'll make a hyperreal instance for myself
+let real1  = hyperreal(
+  log,
+  mySignKeypair,
+  myEncKeypair,
+  (message, encryptPk, node) => {
+    // when a signed message comes in
+    console.log('real1 sees a signed message')
+    // i'll send an encrypted message in reply
+    real1.encryptedMessage([node.key], response, encryptPk)
+  // you'll never encrypt a message to me
+  }, () => {
+    // so this encrypted message callback
+    // will not be called on my hyperreal instance
+    console.log('this will never be called')
+})
+
+// now you make a hyperreal instance for yourself
+let real2 = hyperreal(
+  log,
+  yourSignKeypair,
+  yourEncKeypair,
+  // signed message callback
+  (message, encryptPk, node) => {
+    console.log('real2 sees a signed message')
+  // encrypted message cb
+  }, (message, encryptPk, node) => {
+    console.log('real2 sees', message)
+})
+
+// let's kick it all off by
+// sending a signed message from real2
+real2.signedMessage(null, call)
+
+// > real1 sees a signed message
+// > real2 sees a signed message
+// > real2 sees { buena: 'onda' }
+```
 
 ## background
-
 there are some great solutions for [distributed architectures with persistent identities](http://ssbc.github.io/)
 
 but, for some applications, we do not want persistent identities. compare ebay and craigslist. on ebay, we want identities to which we can ascribe reputation, etc.
@@ -13,89 +79,49 @@ but, for some applications, we do not want persistent identities. compare ebay a
 on craigslist, we want pseudonymity - people are not identified (except, in this case, by their public keys) - but, we can still send them private (encrypted) messages.
 
 check back for more application examples
-
-## usage
-
-```javascript
-const hyperreal = require('hyperreal')
-const hyperlog = require('hyperlog')
-const halite = require('halite')
-const memdb = require('memdb')
-
-// let's send an encrypted message to each other
-const mykeypair = halite.keypair()
-// our psuedonyms are our public keys
-const yourkeypair = halite.keypair()
-// over a shared hyperlog
-let log = hyperlog(memdb(), {
-  valueEncoding: 'json',
-})
-
-// i'll make a hyperreal instance
-let real = hyperreal(log, item => {
-  // if i see an unencrypted post,
-  if (!item.value.ciphertext) {
-    // i'll get your pubkey (pseudonym)
-    let pk = item.value.from_pubkey
-    // and encrypt a reply to you
-    real.encrypted([item.key], {
-      message: 'muy buena onda'
-    }, mykeypair, pk)
-  }
-})
-
-// now you make a hyperreal instance
-let real2 = hyperreal(log, item => {
-  // when you see something with a ciphertext,
-  if (item.value.ciphertext) {
-    // see if you can decrypt it with your keypair
-    var dec = real.decrypt(item, yourkeypair)
-    console.log(`you said "${dec.value.body.message}"`)
-  }
-})
-
-// now, send me a plaintext message to get the party started
-real2.unencrypted([], {
-  message: 'y como te parece'
-}, yourkeypair)
-
-// > you said "muy buena onda"
-```
-
 ## api
+### var keys = require('hyperreal/keys')
+#### keys.signKeypair()
+generate a new signing keypair
+#### keys.encryptKeypair()
+generate a new encryption keypair
+### var real = hyperreal(log, signKeypair, encryptKeypair, onSignedMessage, onEncryptedMessage)
 
-### real = hyperreal(log, cb)
+`log` is a hyperlog
 
-`log` is a hyperlog, or hyperlog-like object
+`signKeypair` is a keypair generated from =talk.signKeypair()=
 
-`cb(node)` is called whenever a new node appears over the hyperlog.
+`encryptKeypair` is a keypair generated from `talk.encryptKeypair()`
 
-### real.unencrypted(links, obj, my_keypair, [cb])
+`onSignedMessage(message, encryptPublicKey, node)` is called when a message encrypted to your =encryptKeypair.publicKey= comes in over the hyperlog. **use to learn about new encryption keys from others.**
 
-post an unencrypted message to the hyperlog.
+- `message` is the (verified) message (an object)
 
-`links` is an array of posts to which the encrypted post should link ([] will append to the log).
+- `encryptPublicKey` is the `encryptKeypair.publicKey` of the party that *sent* the message
 
-`obj` is a javascript object
+- `node` is the original hyperlog node that came over the wire. use this to find `node.key`.
 
-`my_keypair` is a tweetnacle keypair. your public key will be added to the log so others can address you. i recommend generating your keypair with [halite](https://www.npmjs.com/package/halite).
+`onEncryptedMessage(message, encryptPublicKey, node)` is called when a signed message comes in over the hyperlog
 
-`cb(err, node)` is called when the post has been successfully added to the hyperlog.
+- `message` is the (decrypted) message (an object)
 
-### real.encrypted(links, obj, my_keypair, pubkey, [cb])
+- `encryptPublicKey` is the `encryptKeypair.publicKey` of the party that *sent* the message
 
-post an encrypted message to the hyperlog.
+- =node= is the original hyperlog node that came over the wire. use this to find =node.key=.
 
-`pubkey` is the public key of the person to which you'd like to address the message. (again, a tweetnacle key).
+### real.signedMessage (links, obj, cb)
+    
+sign object =obj= and =encryptPubkey= with your =signKeypair=
 
-see above for other argument definitions
+`cb` wraps hyperlog's `log.add` callback
 
-## real.decrypt(node, my_keypair)
+**use this to introduce your =encryptKeypair.publicKey=, so people can send you encrypted messages.**
 
-`node` is a hyperog node that's encrypted with hyperreal, to `my_keypair`.
+### real.encryptedMessage (links, obj, toPubkey, cb)
 
-returns a version of `node` where `node.value` is replaced with a decrypted version of the message.
+encrypt object =obj= to =toPubkey= with our =encryptKeypair=
+
+`cb` wraps hyperlog's `log.add` callback
 
 ## license
-
 BSD
