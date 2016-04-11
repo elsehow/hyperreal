@@ -1,5 +1,9 @@
 # hyperreal
+
 verified & encrypted 1:1 communication over a hyperlog
+
+[![Build Status](https://travis-ci.org/elsehow/hyperreal.svg?branch=master)](https://travis-ci.org/elsehow/hyperreal)
+
 ## install
 ```
     npm install hyperreal
