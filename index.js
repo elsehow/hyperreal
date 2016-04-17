@@ -1,7 +1,9 @@
+const EE = require('events').EventEmitter
 const talk = require('real-talk')
 
-module.exports = (log, signKeypair, encryptKeypair, onSignedMessage, onEncryptedMessage) => {
+module.exports = (log, signKeypair, encryptKeypair) => {
 
+  var emitter = new EE()
 
   function sign (obj) {
     return talk.signed(obj, signKeypair)
@@ -23,18 +25,21 @@ module.exports = (log, signKeypair, encryptKeypair, onSignedMessage, onEncrypted
   function handle (node) {
     function check (v, cb) {
       if (v) {
-        var pk = talk.unserialize(node.value.encryptPublicKey)
-        cb(v.body, pk, node)
+        node.value.body = v.body
+        node.value.encryptPublicKey = talk.unserialize(node.value.encryptPublicKey)
+        cb(node)
       }
     }
     switch (node.value.type) {
     case 'signed':
-      check(talk.verify(node.value.payload),
-            onSignedMessage)
+      check(talk.verify(node.value.payload), n => {
+        emitter.emit('signed', n)
+      })
       break
     case 'encrypted':
-      check(talk.decrypt(node.value.payload, encryptKeypair),
-            onEncryptedMessage)
+      check(talk.decrypt(node.value.payload, encryptKeypair), n => {
+        emitter.emit('encrypted', n)
+      })
       break
     }
 
@@ -43,23 +48,22 @@ module.exports = (log, signKeypair, encryptKeypair, onSignedMessage, onEncrypted
   // setup callbacks
   log.createReadStream({live:true}).on('data', handle)
 
-  // return methods
-  return {
-
-    signedMessage: (links, obj, cb) => {
-      add(links,
-          'signed',
-          sign(obj),
-          cb)
-    },
-
-    encryptedMessage: (links, obj, toEncryptPubkey, cb) => {
-      add(links,
-          'encrypted',
-          encrypt(obj, toEncryptPubkey),
-          cb)
-    },
-
+  emitter.signedMessage = (links, obj, cb) => {
+    add(links,
+        'signed',
+        sign(obj),
+        cb)
   }
 
+  emitter.encryptedMessage = (links, obj, toEncryptPubkey, cb) => {
+    add(links,
+        'encrypted',
+        encrypt(obj, toEncryptPubkey),
+        cb)
+  }
+
+  // return methods
+  return emitter
+
 }
+

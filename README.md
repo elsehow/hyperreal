@@ -6,15 +6,18 @@ verified & encrypted 1:1 communication over a hyperlog
 
 ## install
 ```
-    npm install hyperreal
+npm install hyperreal
 ```
+
 ## use
 
 ```javascript
 'use strict';
 
-const hyperreal = require('hyperreal')
-const keys = require('hyperreal/keys')
+const hyperreal = require('.')
+const keys = require('./keys')
+//const hyperreal = require('hyperreal')
+//const keys = require('hyperreal/keys')
 const hyperlog = require('hyperlog')
 const memdb = require('memdb')
 
@@ -29,50 +32,37 @@ let log = hyperlog(memdb(), {
   valueEncoding: 'json',
 })
 
-// here's what you'll ask me
-// (unencrypted, but signed)
-const call = {como: 'te parece'}
-// and here's what i'll reply
-// (encrypted, just to you)
-const response = {buena: 'onda'}
+var call     = {como: 'te parece'}
+var response = {buena: 'onda'}
 
-// i'll make a hyperreal instance for myself
-let real1  = hyperreal(
-  log,
-  mySignKeypair,
-  myEncKeypair,
-  (message, encryptPk, node) => {
-    // when a signed message comes in
-    console.log('real1 sees a signed message')
-    // i'll send an encrypted message in reply
-    real1.encryptedMessage([node.key], response, encryptPk)
-  // you'll never encrypt a message to me
-  }, () => {
-    // so this encrypted message callback
-    // will not be called on my hyperreal instance
-    console.log('this will never be called')
+// i'll make a hyperreal instance
+let real  = hyperreal(log, mySignKeypair, myEncKeypair)
+// when a signed messages comes through (e.g. from you)
+real.on('signed', node => {
+  console.log('we got a signed node')
+  // its node.value.body is our message
+  console.log(node.value.body)
+  // i'll send an encrypted message in reply
+  real.encryptedMessage([node.key], response, node.value.encryptPublicKey, (err, node) => {
+    console.log('real sent an encrypted message to real2')
+  })
 })
 
-// now you make a hyperreal instance for yourself
-let real2 = hyperreal(
-  log,
-  yourSignKeypair,
-  yourEncKeypair,
-  // signed message callback
-  (message, encryptPk, node) => {
-    console.log('real2 sees a signed message')
-  // encrypted message cb
-  }, (message, encryptPk, node) => {
-    console.log('real2 sees', message)
+// and you make a hyperreal instance
+let real2 = hyperreal(log, yourSignKeypair, yourEncKeypair)
+
+// encrypted message callback
+real2.on('encrypted', node => {
+  console.log('real2 decrypted a message', node.value.body)
 })
 
-// let's kick it all off by
-// sending a signed message from real2
+// kick it all off by sending a signed message from real2
 real2.signedMessage(null, call)
 
-// > real1 sees a signed message
-// > real2 sees a signed message
-// > real2 sees { buena: 'onda' }
+// > we got a signed node
+// > { como: 'te parece' }
+// > real sent an encrypted message to real2
+// > real2 decrypted a message { buena: 'onda' }
 ```
 
 ## background
@@ -89,7 +79,7 @@ check back for more application examples
 generate a new signing keypair
 #### keys.encryptKeypair()
 generate a new encryption keypair
-### var real = hyperreal(log, signKeypair, encryptKeypair, onSignedMessage, onEncryptedMessage)
+### var real = hyperreal(log, signKeypair, encryptKeypair)
 
 `log` is a hyperlog
 
@@ -97,21 +87,23 @@ generate a new encryption keypair
 
 `encryptKeypair` is a keypair generated from `talk.encryptKeypair()`
 
-`onSignedMessage(message, encryptPublicKey, node)` is called when a message encrypted to your `encryptKeypair.publicKey` comes in over the hyperlog. **use to learn about new encryption keys from others.**
+### real.on('signed', cb)
+`cb(node)` is called when a message encrypted to your `encryptKeypair.publicKey` comes in over the hyperlog. **use to learn about new encryption keys from others.**
 
-- `message` is the (verified) message (an object)
+- `node.value.body` is the (verified) message (an object)
 
-- `encryptPublicKey` is the `encryptKeypair.publicKey` of the party that *sent* the message
+- `node.value.encryptPublicKey` is the `encryptKeypair.publicKey` of the party that *sent* the message
 
-- `node` is the original hyperlog node that came over the wire. use this to find `node.key`.
+- `node` is the original hyperlog node that came over the wire (with relevant fields in cleartext)
 
-`onEncryptedMessage(message, encryptPublicKey, node)` is called when a signed message comes in over the hyperlog
+### real.on('encrypted', cb)
+`cb(node)` is called when a message, *encrypted to you*, comes in over the hyperlog.
 
-- `message` is the (decrypted) message (an object)
+- `node.value.body` is the (decrypted) message (an object)
 
-- `encryptPublicKey` is the `encryptKeypair.publicKey` of the party that *sent* the message
+- `node.value.encryptPublicKey` is the `encryptKeypair.publicKey` of the party that *sent* the message
 
-- `node` is the original hyperlog node that came over the wire. use this to find `node.key`.
+- `node` is the original hyperlog node that came over the wire (with relevant fields in cleartext)
 
 ### real.signedMessage (links, obj, cb)
     

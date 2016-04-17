@@ -1,6 +1,6 @@
 {
   "name": "hyperreal",
-  "version": "2.0.4",
+  "version": "3.0.0",
   "description": "verified & encrypted 1:1 communication over a hyperlog",
   "main": "./index.js",
   "scripts": {
@@ -8,7 +8,7 @@
     "watch": "npm-watch"
   },
   "watch": {
-    "test": "{src,test}/*.js"
+    "test": "*.js"
   },
   "author": "elsehow",
   "license": "BSD-2-Clause",
