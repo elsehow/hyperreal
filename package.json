@@ -1,6 +1,6 @@
 {
   "name": "hyperreal",
-  "version": "3.1.0",
+  "version": "3.1.1",
   "description": "verified & encrypted 1:1 communication over a hyperlog",
   "main": "./index.js",
   "scripts": {
