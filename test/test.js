@@ -23,21 +23,27 @@ var response = {buena: 'onda'}
 // test core api ----------------------------
 
 test('verified call / encrypted response', t => {
-  t.plan(8)
-
+  t.plan(13)
+  function check (node) {
+    t.ok(node, 'node exists')
+    t.ok(node.value.body, 'node has a value.body')
+    t.ok(node.value.encryptPublicKey, 'node has a value.encryptPublicKey')
+    t.deepEqual(typeof node.value.encryptPublicKey, 'object', 'public key is an object')
+  }
   // i'll make a hyperreal instance
   let real  = hyperreal(log, mySignKeypair, myEncKeypair)
   // when a signed messages comes through (e.g. from you)
   real.on('signed', node => {
-    t.ok(node, 'we got a signed node')
+    // should be same node schema
+    check(node)
     // its node.value.body is our message
     t.deepEqual(node.value.body, call)
     // i will reply it to it, addressing my message to that message's encryptPk 
-    t.deepEqual(typeof node.value.encryptPublicKey, 'object', 'public key is an object')
     // i'll send an encrypted message in reply
-    real.encryptedMessage([node.key], response, node.value.encryptPublicKey, (err, res) => {
+    real.encryptedMessage([node.key], response, node.value.encryptPublicKey, (err, node) => {
       t.notOk(err, 'no error on add')
-      t.ok(res, 'we sent the message')
+      // SHOULD BE SAME node schema
+      check(node)
     })
   })
   

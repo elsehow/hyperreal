@@ -22,11 +22,25 @@ module.exports = (log, signKeypair, encryptKeypair) => {
     log.add(links, value, cb)
   }
 
+  function unserializedPk (node) {
+    return talk.unserialize(node.value.encryptPublicKey)
+  }
+
+  function wrap (hyperlogCb, obj) {
+    if (hyperlogCb)
+      return (err, node) => {
+        node.value.body = obj
+        node.value.encryptPublicKey = unserializedPk(node)
+        hyperlogCb(err, node)
+      }
+    return
+  }
+
   function handle (node) {
     function check (v, cb) {
       if (v) {
         node.value.body = v.body
-        node.value.encryptPublicKey = talk.unserialize(node.value.encryptPublicKey)
+        node.value.encryptPublicKey = unserializedPk(node)
         cb(node)
       }
     }
@@ -52,14 +66,14 @@ module.exports = (log, signKeypair, encryptKeypair) => {
     add(links,
         'signed',
         sign(obj),
-        cb)
+        wrap(cb, obj))
   }
 
   emitter.encryptedMessage = (links, obj, toEncryptPubkey, cb) => {
     add(links,
         'encrypted',
         encrypt(obj, toEncryptPubkey),
-        cb)
+        wrap(cb, obj))
   }
 
   // return methods
