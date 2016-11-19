@@ -14,10 +14,8 @@ npm install hyperreal
 ```javascript
 'use strict';
 
-const hyperreal = require('.')
-const keys = require('./keys')
-//const hyperreal = require('hyperreal')
-//const keys = require('hyperreal/keys')
+const hyperreal = require('hyperreal')
+const keys = require('hyperreal/keys')
 const hyperlog = require('hyperlog')
 const memdb = require('memdb')
 
